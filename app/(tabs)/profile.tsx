@@ -2,12 +2,12 @@ import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { ThemedText } from '@/components/ThemedText';
 
-export default function ExploreScreen() {
+export default function ProfileScreen() {
   return (
     <View style={styles.container}>
-      <ThemedText type="title">Explore</ThemedText>
+      <ThemedText type="title">Profile</ThemedText>
       <ThemedText>
-        This is the Explore tab. Replace this with your real explore screen content.
+        This is the Profile tab. Add user info, settings or logout buttons here.
       </ThemedText>
     </View>
   );

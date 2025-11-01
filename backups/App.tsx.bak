@@ -1,0 +1,29 @@
+import React from 'react';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+
+import WelcomeScreen from './components/WelcomeScreen';
+import CustomerHome from './screens/CustomerHome';
+import CourierHome from './screens/CourierHome';
+import ProfileScreen from './screens/ProfileScreen';
+import SendScreen from './screens/SendScreen';
+import TrackScreen from './screens/TrackScreen';
+import SettingsScreen from './screens/SettingsScreen';
+
+const Stack = createNativeStackNavigator();
+
+export default function App() {
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Welcome" screenOptions={{ headerShown: true }}>
+        <Stack.Screen name="Welcome" component={WelcomeScreen} options={{ title: 'BullBox' }} />
+        <Stack.Screen name="CustomerHome" component={CustomerHome} options={{ title: 'BullBox - Ügyfél' }} />
+        <Stack.Screen name="CourierHome" component={CourierHome} options={{ title: 'BullBox - Futár' }} />
+        <Stack.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profil' }} />
+        <Stack.Screen name="Send" component={SendScreen} options={{ title: 'Új küldés' }} />
+        <Stack.Screen name="Track" component={TrackScreen} options={{ title: 'Nyomkövetés' }} />
+        <Stack.Screen name="Settings" component={SettingsScreen} options={{ title: 'Beállítások' }} />
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}
