@@ -1,0 +1,44 @@
+<svg width="320" height="400" viewBox="0 0 320 400" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bull Head - Brand Mark -->
+  <!-- Main head -->
+  <ellipse cx="160" cy="170" rx="95" ry="110" fill="#ff2a2a" stroke="#b80000" stroke-width="8"/>
+  
+  <!-- Nose -->
+  <ellipse cx="160" cy="285" rx="40" ry="30" fill="#ffe6e6" stroke="#b80000" stroke-width="6"/>
+  
+  <!-- Horns (yellow, RedBull style) -->
+  <path d="M60,80 Q15,30 100,110" stroke="#FFD700" stroke-width="18" fill="none" stroke-linecap="round"/>
+  <path d="M260,80 Q305,30 220,110" stroke="#FFD700" stroke-width="18" fill="none" stroke-linecap="round"/>
+  
+  <!-- Ears -->
+  <ellipse cx="60" cy="140" rx="25" ry="40" fill="#ff2a2a" stroke="#b80000" stroke-width="6" transform="rotate(-18 60 140)"/>
+  <ellipse cx="260" cy="140" rx="25" ry="40" fill="#ff2a2a" stroke="#b80000" stroke-width="6" transform="rotate(18 260 140)"/>
+  
+  <!-- Eyes (white) -->
+  <ellipse cx="120" cy="180" rx="18" ry="24" fill="#fff"/>
+  <ellipse cx="200" cy="180" rx="18" ry="24" fill="#fff"/>
+  
+  <!-- Pupils -->
+  <circle cx="120" cy="190" r="7" fill="#222"/>
+  <circle cx="200" cy="190" r="7" fill="#222"/>
+  <circle cx="125" cy="185" r="3" fill="#fff" opacity="0.7"/>
+  <circle cx="205" cy="185" r="3" fill="#fff" opacity="0.7"/>
+  
+  <!-- Smile -->
+  <path d="M130,235 Q160,265 190,235" stroke="#b80000" stroke-width="6" fill="none" stroke-linecap="round"/>
+  
+  <!-- Blush -->
+  <ellipse cx="100" cy="215" rx="13" ry="7" fill="#fa82a2" opacity="0.35"/>
+  <ellipse cx="220" cy="215" rx="13" ry="7" fill="#fa82a2" opacity="0.35"/>
+  
+  <!-- Eyebrows -->
+  <path d="M105,162 Q120,150 135,162" stroke="#FFD700" stroke-width="4" fill="none"/>
+  <path d="M185,162 Q200,150 215,162" stroke="#FFD700" stroke-width="4" fill="none"/>
+  
+  <!-- Ear shadows -->
+  <ellipse cx="70" cy="160" rx="7" ry="15" fill="#b80000" opacity="0.3"/>
+  <ellipse cx="250" cy="160" rx="7" ry="15" fill="#b80000" opacity="0.3"/>
+  
+  <!-- Tail tuft decoration -->
+  <path d="M140,330 Q160,350 180,330" stroke="#222" stroke-width="7" fill="none" stroke-linecap="round"/>
+</svg>
