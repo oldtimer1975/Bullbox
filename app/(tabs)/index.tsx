@@ -1,20 +1,20 @@
-import { Image } from 'expo-image';
+import { Image, View } from 'expo-image';
 import { Platform, StyleSheet } from 'react-native';
 
 import { HelloWave } from '@/components/HelloWave';
 import ParallaxScrollView from '@/components/ParallaxScrollView';
 import { ThemedText } from '@/components/ThemedText';
 import { ThemedView } from '@/components/ThemedView';
+import { BrandLogo } from '@/components/BrandLogo';
 
 export default function HomeScreen() {
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
       headerImage={
-        <Image
-          source={require('@/assets/bull_bike.png')}
-          style={styles.reactLogo}
-        />
+        <View style={styles.headerContainer}>
+          <BrandLogo variant="courier" width={250} height={250} />
+        </View>
       }>
       <ThemedView style={styles.titleContainer}>
         <ThemedText type="title">Welcome!</ThemedText>
@@ -65,11 +65,10 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  headerContainer: {
+    height: 250,
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
