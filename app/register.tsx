@@ -3,6 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, KeyboardAvo
 import { useRouter } from "expo-router";
 import { getAuth, createUserWithEmailAndPassword } from "firebase/auth";
 import { firebaseApp } from "../firebaseConfig";
+import { BrandLogo } from "@/components/BrandLogo";
+import { colors, spacing, borderRadius, fontSize } from "@/constants/tokens";
 
 export default function Register() {
   const [email, setEmail] = useState("");
@@ -36,6 +38,7 @@ export default function Register() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <View style={styles.container}>
+        <BrandLogo variant="head" width={80} height={100} style={styles.logo} />
         <Text style={styles.title}>Regisztráció</Text>
         <TextInput
           style={styles.input}
@@ -71,10 +74,48 @@ export default function Register() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: "#f6f7fb", padding: 24 },
-  title: { fontSize: 24, fontWeight: "bold", marginBottom: 36, color: "#222" },
-  input: { width: "100%", marginBottom: 16, padding: 12, borderRadius: 8, backgroundColor: "#fff", borderColor: "#ddd", borderWidth: 1, fontSize: 16 },
-  button: { width: "100%", backgroundColor: "#5a63ff", borderRadius: 24, paddingVertical: 16, alignItems: "center", marginTop: 12 },
-  buttonText: { color: "#fff", fontWeight: "bold", fontSize: 17 },
-  link: { color: "#5a63ff", marginTop: 20, fontSize: 15 },
+  container: { 
+    flex: 1, 
+    justifyContent: "center", 
+    alignItems: "center", 
+    backgroundColor: colors.background, 
+    padding: spacing.lg 
+  },
+  logo: {
+    marginBottom: spacing.md,
+  },
+  title: { 
+    fontSize: fontSize.xl, 
+    fontWeight: "bold", 
+    marginBottom: spacing.xl, 
+    color: colors.text 
+  },
+  input: { 
+    width: "100%", 
+    marginBottom: spacing.md, 
+    padding: spacing.md, 
+    borderRadius: borderRadius.md, 
+    backgroundColor: colors.surface, 
+    borderColor: colors.border, 
+    borderWidth: 1, 
+    fontSize: fontSize.md 
+  },
+  button: { 
+    width: "100%", 
+    backgroundColor: colors.accent, 
+    borderRadius: borderRadius.xl, 
+    paddingVertical: spacing.md, 
+    alignItems: "center", 
+    marginTop: spacing.md 
+  },
+  buttonText: { 
+    color: colors.surface, 
+    fontWeight: "bold", 
+    fontSize: fontSize.lg 
+  },
+  link: { 
+    color: colors.accent, 
+    marginTop: spacing.lg, 
+    fontSize: fontSize.sm 
+  },
 });
