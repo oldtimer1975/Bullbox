@@ -1,324 +1,121 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  Switch,
-  Alert,
-  Platform,
-  RefreshControl,
-} from 'react-native';
-import * as Notifications from 'expo-notifications';
-import BrandLogo from '@/src/components/BrandLogo';
-import { colors, spacing, radius, typography } from '@/src/theme/tokens';
-import { fetchCourierMetrics, trafficLevel, CourierMetrics } from '@/src/services/metrics';
+import React, { useEffect, useState, useCallback, useRef } from 'react'
+import { View, Text, StyleSheet, Image, Pressable } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { fetchCourierMetrics, trafficLevel, CourierMetrics } from '../../src/services/metrics'
+import { colors, space, radius } from '../../src/theme/tokens'
 
 export default function CourierDashboard() {
-  const [metrics, setMetrics] = useState<CourierMetrics | null>(null);
-  const [isOnline, setIsOnline] = useState(false);
-  const [pushEnabled, setPushEnabled] = useState(false);
-  const [pushPermissionDenied, setPushPermissionDenied] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [metrics, setMetrics] = useState<CourierMetrics | null>(null)
+  const [courierOnline, setCourierOnline] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState(false)
+  const [permissionStatus, setPermissionStatus] = useState<'unknown' | 'granted' | 'denied'>('unknown')
+  const pollRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Load metrics on mount
+  const load = useCallback(async () => {
+    const m = await fetchCourierMetrics()
+    setMetrics(m)
+  }, [])
+
   useEffect(() => {
-    loadMetrics();
-    checkPushPermissions();
-  }, []);
-
-  async function loadMetrics() {
-    try {
-      const data = await fetchCourierMetrics();
-      setMetrics(data);
-    } catch (error) {
-      console.error('Failed to load metrics:', error);
-    }
-  }
-
-  async function checkPushPermissions() {
-    try {
-      const { status } = await Notifications.getPermissionsAsync();
-      setPushPermissionDenied(status === 'denied');
-      setPushEnabled(status === 'granted');
-    } catch (error) {
-      console.error('Failed to check push permissions:', error);
-    }
-  }
-
-  async function handleRefresh() {
-    setRefreshing(true);
-    await loadMetrics();
-    setRefreshing(false);
-  }
-
-  function handleOnlineToggle(value: boolean) {
-    setIsOnline(value);
-    if (value && !pushEnabled && !pushPermissionDenied) {
-      Alert.alert(
-        'Push értesítések',
-        'Kapcsold be a push értesítéseket, hogy ne maradj le a megrendelésekről!'
-      );
-    }
-  }
-
-  async function handlePushToggle(value: boolean) {
-    if (value && pushPermissionDenied) {
-      Alert.alert(
-        'Engedély megtagadva',
-        'A push értesítések engedélyezve vannak a beállításokban. Kérlek, engedélyezd őket az eszköz beállításaiban.'
-      );
-      return;
-    }
-
-    if (value) {
-      try {
-        const { status } = await Notifications.requestPermissionsAsync();
-        if (status === 'granted') {
-          setPushEnabled(true);
-          setPushPermissionDenied(false);
-        } else {
-          setPushPermissionDenied(true);
-        }
-      } catch (error) {
-        console.error('Failed to request push permissions:', error);
-      }
+    if (courierOnline) {
+      load()
+      pollRef.current && clearInterval(pollRef.current)
+      pollRef.current = setInterval(load, 8000)
     } else {
-      setPushEnabled(false);
+      pollRef.current && clearInterval(pollRef.current)
+    }
+    return () => { pollRef.current && clearInterval(pollRef.current) }
+  }, [courierOnline, load])
+
+  const toggleOnline = () => setCourierOnline(o => !o)
+
+  const togglePush = async () => {
+    try {
+      if (!pushEnabled) {
+        const Notifications = await import('expo-notifications')
+        const settings = await Notifications.getPermissionsAsync()
+        let finalStatus = settings.status
+        if (settings.status !== 'granted') {
+          const req = await Notifications.requestPermissionsAsync()
+          finalStatus = req.status
+        }
+        if (finalStatus !== 'granted') { setPermissionStatus('denied'); return }
+        setPermissionStatus('granted')
+        // const token = await Notifications.getExpoPushTokenAsync(); console.log('Push token', token.data)
+        setPushEnabled(true)
+      } else {
+        setPushEnabled(false)
+      }
+    } catch (e) {
+      console.warn('Push toggle failed or expo-notifications not installed:', e)
+      setPermissionStatus('denied')
+      setPushEnabled(false)
     }
   }
 
-  const traffic = metrics
-    ? trafficLevel(metrics.activeOrders, metrics.activeCouriers)
-    : 'NORMAL';
-
-  const trafficColors = {
-    LOW: colors.success,
-    NORMAL: colors.warning,
-    HIGH: colors.error,
-  };
+  const level = metrics ? trafficLevel(metrics) : null
 
   return (
-    <ScrollView
-      style={styles.container}
-      contentContainerStyle={styles.contentContainer}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} />
-      }
-    >
-      {/* Hero section */}
-      <View style={styles.heroSection}>
-        <BrandLogo variant="courier" size={180} />
-        <Text style={styles.heroTitle}>Futár Irányítópult</Text>
-      </View>
-
-      {/* Metrics cards */}
-      <View style={styles.metricsContainer}>
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>
-            {metrics?.activeOrders ?? '—'}
-          </Text>
-          <Text style={styles.metricLabel}>Aktív megrendelések</Text>
-        </View>
-
-        <View style={styles.metricCard}>
-          <Text style={styles.metricValue}>
-            {metrics?.activeCouriers ?? '—'}
-          </Text>
-          <Text style={styles.metricLabel}>Aktív futárok</Text>
-        </View>
-
-        <View style={[styles.metricCard, { backgroundColor: trafficColors[traffic] + '20' }]}>
-          <Text style={[styles.metricValue, { color: trafficColors[traffic] }]}>
-            {traffic}
-          </Text>
-          <Text style={styles.metricLabel}>Forgalom</Text>
-        </View>
-      </View>
-
-      {/* Toggles section */}
-      <View style={styles.togglesContainer}>
-        <View style={styles.toggleRow}>
-          <View style={styles.toggleInfo}>
-            <Text style={styles.toggleLabel}>
-              Online státusz
-            </Text>
-            <Text style={styles.toggleDescription}>
-              {isOnline ? 'Megrendeléseket fogadsz' : 'Nem fogadsz megrendeléseket'}
-            </Text>
+    <SafeAreaView style={[styles.page, { backgroundColor: colors.bg.base }]}>
+      <View style={styles.scrollArea}>
+        <View style={styles.hero}>
+          {/* PNG fallback: place assets/branding/bull-courier.png to use Image; else keep a placeholder box */}
+          <Image source={require('../../assets/branding/bull-courier.png')} style={styles.heroImage} resizeMode="contain" />
+          <View style={styles.heroTextWrap}>
+            <Text style={styles.heroTitle}>Futár Panel</Text>
+            <Text style={styles.heroSubtitle}>{courierOnline ? 'ONLINE – figyelem a rendeléseket' : 'OFFLINE – nem kapsz új értesítést'}</Text>
           </View>
-          <Switch
-            value={isOnline}
-            onValueChange={handleOnlineToggle}
-            trackColor={{ false: colors.gray, true: colors.success }}
-            thumbColor={colors.white}
-          />
         </View>
-
-        <View style={styles.toggleRow}>
-          <View style={styles.toggleInfo}>
-            <Text style={styles.toggleLabel}>
-              Push értesítések
-            </Text>
-            <Text style={styles.toggleDescription}>
-              {pushEnabled ? 'Értesítések bekapcsolva' : 'Értesítések kikapcsolva'}
-            </Text>
+        <View style={styles.cardsRow}>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Aktív rendelések</Text>
+            <Text style={styles.cardValue}>{metrics?.activeOrders ?? '—'}</Text>
           </View>
-          <Switch
-            value={pushEnabled}
-            onValueChange={handlePushToggle}
-            trackColor={{ false: colors.gray, true: colors.accent }}
-            thumbColor={colors.white}
-          />
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Aktív futárok</Text>
+            <Text style={styles.cardValue}>{metrics?.activeCouriers ?? '—'}</Text>
+          </View>
+          <View style={styles.card}>
+            <Text style={styles.cardLabel}>Forgalom</Text>
+            <Text style={[styles.cardValue, { color: level?.color || colors.fg.primary }]}>{level?.label ?? '—'}</Text>
+          </View>
+        </View>
+        <View style={styles.actions}>
+          <ToggleButton active={courierOnline} onPress={toggleOnline} activeLabel="Online" inactiveLabel="Offline" colorOn="#22C55E" colorOff={colors.border.subtle} />
+          <ToggleButton active={pushEnabled} onPress={togglePush} activeLabel="Push ON" inactiveLabel="Push OFF" colorOn={colors.brand.accent} colorOff={colors.border.subtle} />
+        </View>
+        {permissionStatus === 'denied' && (<Text style={styles.warning}>Push engedély megtagadva – engedélyezd a rendszer beállításokban.</Text>)}
+        {courierOnline && !pushEnabled && (<Text style={styles.warning}>Online vagy, de a push ki van kapcsolva – nem értesülhetsz új rendelésekről.</Text>)}
+        <View style={styles.footerInfo}>
+          <Text style={styles.meta}>Utolsó frissítés: {metrics ? metrics.updatedAt.toLocaleTimeString() : '—'}</Text>
         </View>
       </View>
+    </SafeAreaView>
+  )
+}
 
-      {/* Warning messages */}
-      {pushPermissionDenied && (
-        <View style={[styles.warning, { backgroundColor: colors.error + '20' }]}>
-          <Text style={[styles.warningText, { color: colors.error }]}>
-            ⚠️ Push értesítések engedélye megtagadva. Engedélyezd őket a beállításokban.
-          </Text>
-        </View>
-      )}
-
-      {isOnline && !pushEnabled && !pushPermissionDenied && (
-        <View style={[styles.warning, { backgroundColor: colors.warning + '20' }]}>
-          <Text style={[styles.warningText, { color: colors.warning }]}>
-            ⚠️ Online vagy, de a push értesítések ki vannak kapcsolva. Kapcsold be őket, hogy ne maradj le a megrendelésekről!
-          </Text>
-        </View>
-      )}
-
-      {/* Last updated */}
-      {metrics && (
-        <Text style={styles.lastUpdated}>
-          Utoljára frissítve: {metrics.lastUpdated.toLocaleTimeString('hu-HU')}
-        </Text>
-      )}
-    </ScrollView>
-  );
+function ToggleButton({ active, onPress, activeLabel, inactiveLabel, colorOn, colorOff }: { active: boolean; onPress: () => void; activeLabel: string; inactiveLabel: string; colorOn: string; colorOff: string }) {
+  return (
+    <Pressable onPress={onPress} style={({ pressed }) => [{ paddingVertical: 14, paddingHorizontal: 22, borderRadius: radius.md, backgroundColor: active ? colorOn : colorOff, opacity: pressed ? 0.85 : 1, minWidth: 140, alignItems: 'center' }] }>
+      <Text style={{ color: '#F8FAFC', fontWeight: '700' }}>{active ? activeLabel : inactiveLabel}</Text>
+    </Pressable>
+  )
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: colors.lightGray,
-  },
-  contentContainer: {
-    padding: spacing.lg,
-  },
-  heroSection: {
-    alignItems: 'center',
-    paddingVertical: spacing.xl,
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    marginBottom: spacing.lg,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  heroTitle: {
-    fontSize: typography.fontSize.xxl,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text.primary,
-    marginTop: spacing.md,
-  },
-  metricsContainer: {
-    flexDirection: 'row',
-    gap: spacing.md,
-    marginBottom: spacing.lg,
-  },
-  metricCard: {
-    flex: 1,
-    backgroundColor: colors.white,
-    padding: spacing.md,
-    borderRadius: radius.md,
-    alignItems: 'center',
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  metricValue: {
-    fontSize: typography.fontSize.title,
-    fontWeight: typography.fontWeight.bold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  metricLabel: {
-    fontSize: typography.fontSize.sm,
-    color: colors.text.secondary,
-    textAlign: 'center',
-  },
-  togglesContainer: {
-    backgroundColor: colors.white,
-    borderRadius: radius.lg,
-    padding: spacing.md,
-    marginBottom: spacing.lg,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-    }),
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: spacing.md,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.lightGray,
-  },
-  toggleInfo: {
-    flex: 1,
-    marginRight: spacing.md,
-  },
-  toggleLabel: {
-    fontSize: typography.fontSize.base,
-    fontWeight: typography.fontWeight.semibold,
-    color: colors.text.primary,
-    marginBottom: spacing.xs,
-  },
-  toggleDescription: {
-    fontSize: typography.fontSize.sm,
-    color: colors.text.secondary,
-  },
-  warning: {
-    padding: spacing.md,
-    borderRadius: radius.md,
-    marginBottom: spacing.lg,
-  },
-  warningText: {
-    fontSize: typography.fontSize.sm,
-    fontWeight: typography.fontWeight.medium,
-    textAlign: 'center',
-  },
-  lastUpdated: {
-    fontSize: typography.fontSize.xs,
-    color: colors.text.secondary,
-    textAlign: 'center',
-    marginTop: spacing.md,
-  },
-});
+  page: { flex: 1 },
+  scrollArea: { flex: 1, padding: space.lg, gap: space.lg },
+  hero: { flexDirection: 'row', gap: space.lg, alignItems: 'center', backgroundColor: colors.bg.elev, padding: space.md, borderRadius: radius.lg },
+  heroImage: { width: 140, height: 140 },
+  heroTextWrap: { flex: 1 },
+  heroTitle: { color: colors.fg.primary, fontSize: 24, fontWeight: '800' },
+  heroSubtitle: { color: colors.fg.muted, fontSize: 13, marginTop: 4 },
+  cardsRow: { flexDirection: 'row', gap: space.md, flexWrap: 'wrap' },
+  card: { flexGrow: 1, minWidth: 120, backgroundColor: colors.bg.elev, padding: space.md, borderRadius: radius.md, gap: 4 },
+  cardLabel: { color: colors.fg.muted, fontSize: 12, textTransform: 'uppercase', letterSpacing: 0.5 },
+  cardValue: { color: colors.fg.primary, fontSize: 20, fontWeight: '700' },
+  actions: { flexDirection: 'row', gap: space.md, flexWrap: 'wrap' },
+  warning: { color: '#F59E0B', fontSize: 12, marginTop: 4 },
+  footerInfo: { marginTop: space.lg },
+  meta: { color: colors.fg.muted, fontSize: 12 }
+})

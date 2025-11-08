@@ -1,65 +1,9 @@
-/**
- * BullBox Design Tokens
- * Brand colors, spacing, and styling constants
- */
-
 export const colors = {
-  // Brand palette
-  background: '#0F172A',      // Dark slate background
-  primary: '#E10600',         // Red primary color
-  accent: '#2563EB',          // Blue accent color
-  
-  // Neutrals
-  white: '#FFFFFF',
-  lightGray: '#F8FAFC',
-  gray: '#64748B',
-  darkGray: '#334155',
-  
-  // Semantic colors
-  success: '#10B981',
-  warning: '#F59E0B',
-  error: '#EF4444',
-  
-  // Text colors
-  text: {
-    primary: '#0F172A',
-    secondary: '#64748B',
-    inverse: '#FFFFFF',
-  },
-};
-
-export const spacing = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48,
-};
-
-export const radius = {
-  sm: 4,
-  md: 8,
-  lg: 12,
-  xl: 16,
-  round: 9999, // Fully rounded (circles, pills)
-};
-
-export const typography = {
-  fontSize: {
-    xs: 12,
-    sm: 14,
-    base: 16,
-    lg: 18,
-    xl: 20,
-    xxl: 24,
-    title: 32,
-    hero: 48,
-  },
-  fontWeight: {
-    regular: '400' as const,
-    medium: '500' as const,
-    semibold: '600' as const,
-    bold: '700' as const,
-  },
-};
+  bg: { base: '#0F172A', elev: '#111827' },
+  fg: { primary: '#F8FAFC', muted: '#94A3B8' },
+  brand: { primary: '#E10600', accent: '#2563EB' },
+  state: { success: '#22C55E', warn: '#F59E0B', error: '#EF4444', info: '#38BDF8' },
+  border: { subtle: '#1F2937', strong: '#334155' }
+}
+export const radius = { sm: 6, md: 10, lg: 14, xl: 20 }
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32 }

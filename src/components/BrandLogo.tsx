@@ -1,30 +1,17 @@
-import React from 'react';
-import { View, StyleSheet } from 'react-native';
-import BullHeadSvg from '@/assets/branding/bull-head.svg';
-import BullCourierSvg from '@/assets/branding/bull-courier.svg';
+import React from 'react'
+import { View, StyleSheet, ViewStyle } from 'react-native'
+import BullHead from '../../assets/branding/bull-head.svg'
+import BullCourier from '../../assets/branding/bull-courier.svg'
 
-interface BrandLogoProps {
-  variant: 'head' | 'courier';
-  size?: number;
-}
+type Variant = 'head' | 'courier'
+interface Props { variant?: Variant; size?: number; style?: ViewStyle }
 
-/**
- * BrandLogo component
- * Renders the bull head or courier illustration SVG
- */
-export default function BrandLogo({ variant, size = 120 }: BrandLogoProps) {
-  const SvgComponent = variant === 'head' ? BullHeadSvg : BullCourierSvg;
-  
+export default function BrandLogo({ variant = 'head', size = 64, style }: Props) {
+  const Svg = variant === 'head' ? BullHead : BullCourier
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
-      <SvgComponent width={size} height={size} />
+    <View style={[styles.wrap, { width: size, height: size }, style]}>
+      <Svg width="100%" height="100%" />
     </View>
-  );
+  )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+const styles = StyleSheet.create({ wrap: { alignItems: 'center', justifyContent: 'center' } })
