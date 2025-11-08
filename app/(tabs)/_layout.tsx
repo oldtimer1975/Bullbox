@@ -7,7 +7,7 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        tabBarActiveTintColor: '#0066CC',
+        tabBarActiveTintColor: '#E10600',
       }}
     >
       <Tabs.Screen
@@ -18,17 +18,37 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="courier-dashboard"
+        options={{
+          title: 'Futár',
+          tabBarIcon: ({ color, size }) => <Ionicons name="bicycle" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="create-package"
+        options={{
+          title: 'Csomag',
+          tabBarIcon: ({ color, size }) => <Ionicons name="cube" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="explore"
         options={{
-          title: 'Explore',
+          title: 'Felfedezés',
           tabBarIcon: ({ color, size }) => <Ionicons name="search" size={size} color={color} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'Profil',
           tabBarIcon: ({ color, size }) => <Ionicons name="person" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="my-packages"
+        options={{
+          href: null, // Hide from tab bar
         }}
       />
     </Tabs>

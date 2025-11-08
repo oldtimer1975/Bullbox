@@ -1,75 +1,65 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import React from 'react'
+import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native'
+import { SafeAreaView } from 'react-native-safe-area-context'
+import { Link } from 'expo-router'
+import BrandLogo from '../../src/components/BrandLogo'
+import { colors, radius, space } from '../../src/theme/tokens'
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+export default function HomeTab() {
+  const { width } = useWindowDimensions()
+  const isWide = width >= 900
 
-export default function HomeScreen() {
+  const buttonBase = { paddingVertical: 14, paddingHorizontal: 20, borderRadius: radius.md, width: 280, alignItems: 'center' } as const
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/bull_bike.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
-  );
+    <SafeAreaView style={[styles.page, { backgroundColor: colors.bg.base }]}>
+      <View style={[styles.layout, { flexDirection: isWide ? 'row' : 'column' }]}>
+        <View style={[styles.left, { padding: isWide ? space.xl : space.lg }]}>
+          <BrandLogo variant="courier" size={isWide ? 360 : 220} />
+          <View style={{ height: space.lg }} />
+          <View style={[styles.roundRow, { gap: space.lg }]}>
+            <Link href="/(tabs)/courier-dashboard" asChild>
+              <Pressable accessibilityLabel="Futár mód" style={({ pressed }) => [styles.roundCta, { backgroundColor: colors.brand.accent, opacity: pressed ? 0.85 : 1 }]}>
+                <Text style={styles.roundCtaText}>Futár</Text>
+              </Pressable>
+            </Link>
+            <Link href="/(tabs)/create-package" asChild>
+              <Pressable accessibilityLabel="Ügyfél mód" style={({ pressed }) => [styles.roundCta, { borderWidth: 2, borderColor: colors.fg.muted, opacity: pressed ? 0.85 : 1, backgroundColor: 'transparent' }]}>
+                <Text style={styles.roundCtaText}>Ügyfél</Text>
+              </Pressable>
+            </Link>
+          </View>
+        </View>
+        <View style={[styles.right, { padding: isWide ? space.xl : space.lg }]}>
+          <Text style={styles.title}>BullBox</Text>
+          <Text style={styles.subtitle}>Gyors, közösségi csomagküldés</Text>
+          <View style={{ height: space.xl }} />
+          <Link href="/(tabs)/courier-dashboard" asChild>
+            <Pressable style={({ pressed }) => [buttonBase, { backgroundColor: colors.brand.accent, opacity: pressed ? 0.9 : 1 }]} accessibilityLabel="Futárként belépek">
+              <Text style={styles.btnText}>Futárként belépek</Text>
+            </Pressable>
+          </Link>
+          <View style={{ height: space.md }} />
+          <Link href="/(tabs)/create-package" asChild>
+            <Pressable style={({ pressed }) => [buttonBase, { borderWidth: 1, borderColor: colors.fg.muted, opacity: pressed ? 0.9 : 1 }]} accessibilityLabel="Ügyfélként feladok">
+              <Text style={styles.btnText}>Ügyfélként feladok</Text>
+            </Pressable>
+          </Link>
+        </View>
+      </View>
+    </SafeAreaView>
+  )
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
-  },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
-  },
-});
+  page: { flex: 1 },
+  layout: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xl },
+  left: { alignItems: 'center', justifyContent: 'center' },
+  right: { alignItems: 'center', justifyContent: 'center', minWidth: 320 },
+  title: { color: colors.fg.primary, fontSize: 28, fontWeight: '800' },
+  subtitle: { color: colors.fg.muted, fontSize: 14, marginTop: 6, textAlign: 'center' },
+  btnText: { color: colors.fg.primary, fontWeight: '700' },
+  roundRow: { alignItems: 'center', justifyContent: 'center' },
+  roundCta: { width: 112, height: 112, borderRadius: 9999, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
+  roundCtaText: { color: colors.fg.primary, fontWeight: '800', fontSize: 16 }
+})
