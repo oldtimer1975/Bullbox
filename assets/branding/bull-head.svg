@@ -1,0 +1,9 @@
+<svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Bull head icon placeholder - minimal brand mark -->
+  <rect width="120" height="120" rx="60" fill="#0F172A"/>
+  <circle cx="60" cy="60" r="35" fill="#E10600"/>
+  <path d="M45 55 Q60 45 75 55" stroke="white" stroke-width="3" fill="none"/>
+  <circle cx="48" cy="62" r="4" fill="white"/>
+  <circle cx="72" cy="62" r="4" fill="white"/>
+  <path d="M50 75 Q60 80 70 75" stroke="white" stroke-width="2" fill="none"/>
+</svg>
