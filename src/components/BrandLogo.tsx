@@ -1,17 +1,40 @@
 import React from 'react'
-import { View, StyleSheet, ViewStyle } from 'react-native'
-import BullHead from '../../assets/branding/bull-head.svg'
-import BullCourier from '../../assets/branding/bull-courier.svg'
+import { View, StyleSheet, ViewStyle, Image, ImageStyle, AccessibilityProps } from 'react-native'
 
 type Variant = 'head' | 'courier'
-interface Props { variant?: Variant; size?: number; style?: ViewStyle }
 
-export default function BrandLogo({ variant = 'head', size = 64, style }: Props) {
-  const Svg = variant === 'head' ? BullHead : BullCourier
+type Props = {
+  variant?: Variant
+  size?: number
+  style?: ViewStyle
+  imageStyle?: ImageStyle
+  accessibilityLabel?: AccessibilityProps['accessibilityLabel']
+}
+
+export default function BrandLogo({
+  variant = 'head',
+  size = 48,
+  style,
+  imageStyle,
+  accessibilityLabel,
+}: Props) {
+  const source =
+    variant === 'head'
+      ? require('../../assets/branding/bull-head.png')
+      : require('../../assets/branding/bull-courier.png')
+
   return (
     <View style={[styles.wrap, { width: size, height: size }, style]}>
-      <Svg width="100%" height="100%" />
+      <Image
+        source={source}
+        style={[{ width: size, height: size }, imageStyle]}
+        resizeMode="contain"
+        accessibilityLabel={accessibilityLabel ?? (variant === 'head' ? 'BullBox brand head' : 'BullBox courier bull')}
+      />
     </View>
   )
 }
-const styles = StyleSheet.create({ wrap: { alignItems: 'center', justifyContent: 'center' } })
+
+const styles = StyleSheet.create({
+  wrap: { alignItems: 'center', justifyContent: 'center' },
+})

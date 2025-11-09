@@ -1,65 +1,116 @@
 import React from 'react'
-import { View, Text, StyleSheet, Pressable, useWindowDimensions } from 'react-native'
-import { SafeAreaView } from 'react-native-safe-area-context'
-import { Link } from 'expo-router'
-import BrandLogo from '../../src/components/BrandLogo'
-import { colors, radius, space } from '../../src/theme/tokens'
+import { View, StyleSheet, Text, Pressable, Image, Dimensions } from 'react-native'
+import { router } from 'expo-router'
 
-export default function HomeTab() {
-  const { width } = useWindowDimensions()
-  const isWide = width >= 900
+const BG = require('../../assets/branding/bull-courier.png')
 
-  const buttonBase = { paddingVertical: 14, paddingHorizontal: 20, borderRadius: radius.md, width: 280, alignItems: 'center' } as const
+// Képernyő méretek
+const { width: screenW, height: screenH } = Dimensions.get('window')
+
+// Kerék gomb méret: szélesség arány + felső limit
+const wheelSize = Math.max(108, Math.min(170, Math.floor(screenW * 0.24)))
+
+// POZÍCIÓ FINOMHANGOLÁS (százalékban) – ha elcsúszott, mondd mennyit állítsunk
+const leftWheel = { xPct: 30, yPct: 73 }    // Futár
+const rightWheel = { xPct: 70, yPct: 73 }   // Ügyfél
+
+// A kép skálázása: a magasság ne menjen a teljes képernyő fölé
+// A “cover” helyett használunk dinamikus szélességet és contain-t
+export default function HomeFullScreen() {
+  const goCourier = () => router.push('/courier-dashboard')
+  const goCustomer = () => router.push('/create-package') // Ügyfél gomb célja
 
   return (
-    <SafeAreaView style={[styles.page, { backgroundColor: colors.bg.base }]}>
-      <View style={[styles.layout, { flexDirection: isWide ? 'row' : 'column' }]}>
-        <View style={[styles.left, { padding: isWide ? space.xl : space.lg }]}>
-          <BrandLogo variant="courier" size={isWide ? 360 : 220} />
-          <View style={{ height: space.lg }} />
-          <View style={[styles.roundRow, { gap: space.lg }]}>
-            <Link href="/(tabs)/courier-dashboard" asChild>
-              <Pressable accessibilityLabel="Futár mód" style={({ pressed }) => [styles.roundCta, { backgroundColor: colors.brand.accent, opacity: pressed ? 0.85 : 1 }]}>
-                <Text style={styles.roundCtaText}>Futár</Text>
-              </Pressable>
-            </Link>
-            <Link href="/(tabs)/create-package" asChild>
-              <Pressable accessibilityLabel="Ügyfél mód" style={({ pressed }) => [styles.roundCta, { borderWidth: 2, borderColor: colors.fg.muted, opacity: pressed ? 0.85 : 1, backgroundColor: 'transparent' }]}>
-                <Text style={styles.roundCtaText}>Ügyfél</Text>
-              </Pressable>
-            </Link>
-          </View>
-        </View>
-        <View style={[styles.right, { padding: isWide ? space.xl : space.lg }]}>
-          <Text style={styles.title}>BullBox</Text>
-          <Text style={styles.subtitle}>Gyors, közösségi csomagküldés</Text>
-          <View style={{ height: space.xl }} />
-          <Link href="/(tabs)/courier-dashboard" asChild>
-            <Pressable style={({ pressed }) => [buttonBase, { backgroundColor: colors.brand.accent, opacity: pressed ? 0.9 : 1 }]} accessibilityLabel="Futárként belépek">
-              <Text style={styles.btnText}>Futárként belépek</Text>
-            </Pressable>
-          </Link>
-          <View style={{ height: space.md }} />
-          <Link href="/(tabs)/create-package" asChild>
-            <Pressable style={({ pressed }) => [buttonBase, { borderWidth: 1, borderColor: colors.fg.muted, opacity: pressed ? 0.9 : 1 }]} accessibilityLabel="Ügyfélként feladok">
-              <Text style={styles.btnText}>Ügyfélként feladok</Text>
-            </Pressable>
-          </Link>
-        </View>
+    <View style={styles.root}>
+
+      {/* Kép keret – így nem lesz túl nagy, és megtartja az arányt */}
+      <View style={styles.heroWrapper}>
+        <Image
+          source={BG}
+            // Ha túlnyúlik, maxHeight korlátozza
+          style={styles.heroImage}
+          resizeMode="contain"
+        />
       </View>
-    </SafeAreaView>
+
+      {/* Futár kerék */}
+      <Pressable
+        onPress={goCourier}
+        style={({ pressed }) => [
+          styles.wheel,
+          wheelPos(leftWheel.xPct, leftWheel.yPct),
+          {
+            width: wheelSize,
+            height: wheelSize,
+            backgroundColor: '#2563EB',
+            opacity: pressed ? 0.85 : 1
+          }
+        ]}
+      >
+        <Text style={styles.wheelText}>Futár</Text>
+      </Pressable>
+
+      {/* Ügyfél kerék */}
+      <Pressable
+        onPress={goCustomer}
+        style={({ pressed }) => [
+          styles.wheel,
+          wheelPos(rightWheel.xPct, rightWheel.yPct),
+          {
+            width: wheelSize,
+            height: wheelSize,
+            backgroundColor: '#E10600',
+            opacity: pressed ? 0.85 : 1
+          }
+        ]}
+      >
+        <Text style={styles.wheelText}>Ügyfél</Text>
+      </Pressable>
+    </View>
   )
 }
 
+function wheelPos(xPct: number, yPct: number) {
+  return {
+    position: 'absolute',
+    left: (xPct / 100) * screenW - wheelSize / 2,
+    top: (yPct / 100) * screenH - wheelSize / 2
+  }
+}
+
 const styles = StyleSheet.create({
-  page: { flex: 1 },
-  layout: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: space.xl },
-  left: { alignItems: 'center', justifyContent: 'center' },
-  right: { alignItems: 'center', justifyContent: 'center', minWidth: 320 },
-  title: { color: colors.fg.primary, fontSize: 28, fontWeight: '800' },
-  subtitle: { color: colors.fg.muted, fontSize: 14, marginTop: 6, textAlign: 'center' },
-  btnText: { color: colors.fg.primary, fontWeight: '700' },
-  roundRow: { alignItems: 'center', justifyContent: 'center' },
-  roundCta: { width: 112, height: 112, borderRadius: 9999, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.35, shadowRadius: 10, shadowOffset: { width: 0, height: 6 }, elevation: 4 },
-  roundCtaText: { color: colors.fg.primary, fontWeight: '800', fontSize: 16 }
+  root: {
+    flex: 1,
+    backgroundColor: '#0F172A'
+  },
+  heroWrapper: {
+    position: 'absolute',
+    inset: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingTop: 10
+  },
+  heroImage: {
+    width: screenW * 0.92,
+    maxHeight: screenH * 0.92
+  },
+  wheel: {
+    borderRadius: 9999,
+    borderWidth: 4,
+    borderColor: 'rgba(255,255,255,0.25)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOpacity: 0.45,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10
+  },
+  wheelText: {
+    color: '#F8FAFC',
+    fontWeight: '800',
+    letterSpacing: 0.6,
+    fontSize: 18,
+    textTransform: 'uppercase'
+  }
 })

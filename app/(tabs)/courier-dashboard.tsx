@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react'
-import { View, Text, StyleSheet, Image, Pressable } from 'react-native'
+import { View, Text, StyleSheet, Pressable } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { fetchCourierMetrics, trafficLevel, CourierMetrics } from '../../src/services/metrics'
 import { colors, space, radius } from '../../src/theme/tokens'
+import BrandLogo from '../../src/components/BrandLogo'
 
 export default function CourierDashboard() {
   const [metrics, setMetrics] = useState<CourierMetrics | null>(null)
@@ -59,13 +60,16 @@ export default function CourierDashboard() {
     <SafeAreaView style={[styles.page, { backgroundColor: colors.bg.base }]}>
       <View style={styles.scrollArea}>
         <View style={styles.hero}>
-          {/* PNG fallback: place assets/branding/bull-courier.png to use Image; else keep a placeholder box */}
-          <Image source={require('../../assets/branding/bull-courier.png')} style={styles.heroImage} resizeMode="contain" />
+          {/* SVG hero illusztráció BrandLogo-val (nem igényel PNG fájlt) */}
+          <BrandLogo variant="courier" size={140} />
           <View style={styles.heroTextWrap}>
             <Text style={styles.heroTitle}>Futár Panel</Text>
-            <Text style={styles.heroSubtitle}>{courierOnline ? 'ONLINE – figyelem a rendeléseket' : 'OFFLINE – nem kapsz új értesítést'}</Text>
+            <Text style={styles.heroSubtitle}>
+              {courierOnline ? 'ONLINE – figyelem a rendeléseket' : 'OFFLINE – nem kapsz új értesítést'}
+            </Text>
           </View>
         </View>
+
         <View style={styles.cardsRow}>
           <View style={styles.card}>
             <Text style={styles.cardLabel}>Aktív rendelések</Text>
@@ -80,12 +84,19 @@ export default function CourierDashboard() {
             <Text style={[styles.cardValue, { color: level?.color || colors.fg.primary }]}>{level?.label ?? '—'}</Text>
           </View>
         </View>
+
         <View style={styles.actions}>
           <ToggleButton active={courierOnline} onPress={toggleOnline} activeLabel="Online" inactiveLabel="Offline" colorOn="#22C55E" colorOff={colors.border.subtle} />
           <ToggleButton active={pushEnabled} onPress={togglePush} activeLabel="Push ON" inactiveLabel="Push OFF" colorOn={colors.brand.accent} colorOff={colors.border.subtle} />
         </View>
-        {permissionStatus === 'denied' && (<Text style={styles.warning}>Push engedély megtagadva – engedélyezd a rendszer beállításokban.</Text>)}
-        {courierOnline && !pushEnabled && (<Text style={styles.warning}>Online vagy, de a push ki van kapcsolva – nem értesülhetsz új rendelésekről.</Text>)}
+
+        {permissionStatus === 'denied' && (
+          <Text style={styles.warning}>Push engedély megtagadva – engedélyezd a rendszer beállításokban.</Text>
+        )}
+        {courierOnline && !pushEnabled && (
+          <Text style={styles.warning}>Online vagy, de a push ki van kapcsolva – nem értesülhetsz új rendelésekről.</Text>
+        )}
+
         <View style={styles.footerInfo}>
           <Text style={styles.meta}>Utolsó frissítés: {metrics ? metrics.updatedAt.toLocaleTimeString() : '—'}</Text>
         </View>
@@ -96,7 +107,12 @@ export default function CourierDashboard() {
 
 function ToggleButton({ active, onPress, activeLabel, inactiveLabel, colorOn, colorOff }: { active: boolean; onPress: () => void; activeLabel: string; inactiveLabel: string; colorOn: string; colorOff: string }) {
   return (
-    <Pressable onPress={onPress} style={({ pressed }) => [{ paddingVertical: 14, paddingHorizontal: 22, borderRadius: radius.md, backgroundColor: active ? colorOn : colorOff, opacity: pressed ? 0.85 : 1, minWidth: 140, alignItems: 'center' }] }>
+    <Pressable
+      onPress={onPress}
+      style={({ pressed }) => [
+        { paddingVertical: 14, paddingHorizontal: 22, borderRadius: radius.md, backgroundColor: active ? colorOn : colorOff, opacity: pressed ? 0.85 : 1, minWidth: 140, alignItems: 'center' }
+      ]}
+    >
       <Text style={{ color: '#F8FAFC', fontWeight: '700' }}>{active ? activeLabel : inactiveLabel}</Text>
     </Pressable>
   )
@@ -106,7 +122,6 @@ const styles = StyleSheet.create({
   page: { flex: 1 },
   scrollArea: { flex: 1, padding: space.lg, gap: space.lg },
   hero: { flexDirection: 'row', gap: space.lg, alignItems: 'center', backgroundColor: colors.bg.elev, padding: space.md, borderRadius: radius.lg },
-  heroImage: { width: 140, height: 140 },
   heroTextWrap: { flex: 1 },
   heroTitle: { color: colors.fg.primary, fontSize: 24, fontWeight: '800' },
   heroSubtitle: { color: colors.fg.muted, fontSize: 13, marginTop: 4 },
