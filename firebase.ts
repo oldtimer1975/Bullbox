@@ -1,18 +1,18 @@
-import { initializeApp } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { initializeApp, getApps, getApp } from "firebase/app";
+import { initializeAuth, getReactNativePersistence } from "firebase/auth";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { firebaseConfig } from "./firebaseConfig";
 
-const firebaseConfig = {
-  apiKey: "AIzaSyBFI2JAxRkeURJQpUo-ue2axkW92WitFk4",
-  authDomain: "bullbox-5cf4e.firebaseapp.com",
-  projectId: "bullbox-5cf4e",
-  storageBucket: "bullbox-5cf4e.appspot.com",
-  messagingSenderId: "686562560716",
-  appId: "1:686562560716:web:1d2b4c664dc5cf3c515069"
-};
+// App egyszeri inicializálása (idempotens)
+export const app = getApps().length ? getApp() : initializeApp(firebaseConfig);
 
-export const firebaseApp = initializeApp(firebaseConfig);
-export const db = getFirestore(firebaseApp);
-export const auth = getAuth(firebaseApp);
+// Auth inicializálása RN perzisztenciával
+export const auth = initializeAuth(app, {
+  persistence: getReactNativePersistence(AsyncStorage),
+});
 
-export default firebaseApp;
+// Ha később kell Firestore / Storage, így tudod bővíteni:
+// import { getFirestore } from "firebase/firestore";
+// import { getStorage } from "firebase/storage";
+// export const db = getFirestore(app);
+// export const storage = getStorage(app);

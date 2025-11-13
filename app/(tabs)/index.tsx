@@ -1,116 +1,38 @@
 import React from 'react'
-import { View, StyleSheet, Text, Pressable, Image, Dimensions } from 'react-native'
-import { router } from 'expo-router'
+import { ScrollView, View, Alert, useWindowDimensions, Platform } from 'react-native'
+import { useRouter } from 'expo-router'
+import { BullHeadHotspots } from '../../components/BullHeadHotspots'
+import { BULL_IMAGE, BULL_SPOTS, SPOT_TO_ROUTE } from '../../constants/bull-spots'
 
-const BG = require('../../assets/branding/bull-courier.png')
+export default function HomeScreen() {
+  const router = useRouter()
+  const { width } = useWindowDimensions()
 
-// Képernyő méretek
-const { width: screenW, height: screenH } = Dimensions.get('window')
-
-// Kerék gomb méret: szélesség arány + felső limit
-const wheelSize = Math.max(108, Math.min(170, Math.floor(screenW * 0.24)))
-
-// POZÍCIÓ FINOMHANGOLÁS (százalékban) – ha elcsúszott, mondd mennyit állítsunk
-const leftWheel = { xPct: 30, yPct: 73 }    // Futár
-const rightWheel = { xPct: 70, yPct: 73 }   // Ügyfél
-
-// A kép skálázása: a magasság ne menjen a teljes képernyő fölé
-// A “cover” helyett használunk dinamikus szélességet és contain-t
-export default function HomeFullScreen() {
-  const goCourier = () => router.push('/courier-dashboard')
-  const goCustomer = () => router.push('/create-package') // Ügyfél gomb célja
+  // Konténer szélesség: 90% viewport, plafon nagy kijelzőn
+  const maxW = Math.min(width * 0.9, Platform.OS === 'web' ? 900 : 420)
 
   return (
-    <View style={styles.root}>
-
-      {/* Kép keret – így nem lesz túl nagy, és megtartja az arányt */}
-      <View style={styles.heroWrapper}>
-        <Image
-          source={BG}
-            // Ha túlnyúlik, maxHeight korlátozza
-          style={styles.heroImage}
-          resizeMode="contain"
+    <ScrollView contentContainerStyle={{ padding: 16 }}>
+      <View style={{ gap: 24 }}>
+        <BullHeadHotspots
+          imageSource={BULL_IMAGE}
+          spots={BULL_SPOTS}
+          debug={false}
+          showLabels={true}              // automatikusan elrejti szűk szélességnél
+          markerSize="auto"              // dinamikus gombméret
+          containerWidth={maxW}          // rugalmas szélesség
+          containerMaxWidth={900}        // weben plafon
+          autoHideLabelsBelowWidth={500} // 500px alatt rejtse a címkéket
+          onSpotPress={(id) => {
+            const route = SPOT_TO_ROUTE[id]
+            if (route) {
+              router.push(route as any)
+            } else {
+              Alert.alert('Info', `Nincs útvonal hozzárendelve ehhez: ${id}`)
+            }
+          }}
         />
       </View>
-
-      {/* Futár kerék */}
-      <Pressable
-        onPress={goCourier}
-        style={({ pressed }) => [
-          styles.wheel,
-          wheelPos(leftWheel.xPct, leftWheel.yPct),
-          {
-            width: wheelSize,
-            height: wheelSize,
-            backgroundColor: '#2563EB',
-            opacity: pressed ? 0.85 : 1
-          }
-        ]}
-      >
-        <Text style={styles.wheelText}>Futár</Text>
-      </Pressable>
-
-      {/* Ügyfél kerék */}
-      <Pressable
-        onPress={goCustomer}
-        style={({ pressed }) => [
-          styles.wheel,
-          wheelPos(rightWheel.xPct, rightWheel.yPct),
-          {
-            width: wheelSize,
-            height: wheelSize,
-            backgroundColor: '#E10600',
-            opacity: pressed ? 0.85 : 1
-          }
-        ]}
-      >
-        <Text style={styles.wheelText}>Ügyfél</Text>
-      </Pressable>
-    </View>
+    </ScrollView>
   )
 }
-
-function wheelPos(xPct: number, yPct: number) {
-  return {
-    position: 'absolute',
-    left: (xPct / 100) * screenW - wheelSize / 2,
-    top: (yPct / 100) * screenH - wheelSize / 2
-  }
-}
-
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: '#0F172A'
-  },
-  heroWrapper: {
-    position: 'absolute',
-    inset: 0,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingTop: 10
-  },
-  heroImage: {
-    width: screenW * 0.92,
-    maxHeight: screenH * 0.92
-  },
-  wheel: {
-    borderRadius: 9999,
-    borderWidth: 4,
-    borderColor: 'rgba(255,255,255,0.25)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: 10 },
-    elevation: 10
-  },
-  wheelText: {
-    color: '#F8FAFC',
-    fontWeight: '800',
-    letterSpacing: 0.6,
-    fontSize: 18,
-    textTransform: 'uppercase'
-  }
-})
