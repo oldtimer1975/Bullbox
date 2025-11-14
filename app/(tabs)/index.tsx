@@ -8,7 +8,6 @@ export default function HomeScreen() {
   const router = useRouter();
   const { width } = useWindowDimensions();
 
-  // nagyobb kitöltés: 95% viewport, plafon weben 1100px
   const maxW = Math.min(width * 0.95, Platform.OS === "web" ? 1100 : 420);
 
   return (
@@ -31,7 +30,8 @@ export default function HomeScreen() {
               Alert.alert("Info", `Nincs útvonal hozzárendelve ehhez: ${id}`);
             }
           }}
-          aspectRatio={1.35} // ha nagyobbra szeretnéd a fej részét, csökkentsd vagy növeld az arányt
+          aspectRatio={1.35}
+          showCard={false}
         />
       </View>
     </ScrollView>
