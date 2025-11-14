@@ -1,312 +1,124 @@
-import React, { useEffect, useRef, useState } from 'react'
-import {
-  Image,
-  ImageSourcePropType,
-  ImageStyle,
-  Pressable,
-  StyleSheet,
-  Text,
-  View,
-  Platform,
-} from 'react-native'
-import * as Haptics from 'expo-haptics'
-
-export type Hotspot = {
-  id: string
-  label: string
-  x: number
-  y: number
-  align?: 'top' | 'bottom' | 'left' | 'right'
-}
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from "react-native";
+import Svg, { Circle } from "react-native-svg";
+import { useWindowDimensions } from "react-native";
+import { HOTSPOTS, BullSpot } from "../constants/bull-spots";
 
 type Props = {
-  imageSource: ImageSourcePropType
-  spots?: Hotspot[]
-  debug?: boolean
-  onSpotPress?: (id: string) => void
-  containerStyle?: ImageStyle
-  // DINAMIKUS marker méret: 'auto' = a konténer szélességből számol
-  markerSize?: number | 'auto'
-  showLabels?: boolean
-  labelOffset?: number
-  // Rugalmas méretezés
-  containerWidth?: number | string      // '100%' vagy px
-  containerMaxWidth?: number            // px plafon (weben)
-  autoHideLabelsBelowWidth?: number     // e szélesség alatt elrejti a címkéket
-}
+  width?: number;
+  height?: number;
+  onPress?: (hotspot: BullSpot) => void;
+};
 
-export function BullHeadHotspots({
-  imageSource,
-  spots = [],
-  debug = false,
-  onSpotPress,
-  containerStyle,
-  markerSize = 'auto',
-  showLabels = true,
-  labelOffset = 8,
-  containerWidth = '100%',
-  containerMaxWidth = 900,
-  autoHideLabelsBelowWidth = 460,
-}: Props) {
-  const [aspectRatio, setAspectRatio] = useState<number>(1)
-  const [lastTap, setLastTap] = useState<{ x: number; y: number } | null>(null)
-  const containerRef = useRef<View>(null)
-  const [layoutSize, setLayoutSize] = useState<{ w: number; h: number }>({ w: 0, h: 0 })
+const BullHeadHotspots: React.FC<Props> = ({ width, height, onPress }) => {
+  const dims = useWindowDimensions();
+  const viewW = width ?? dims.width;
+  const viewH = height ?? Math.round(dims.width * 0.6);
 
-  // Kép arány meghatározás (require vagy uri)
-  useEffect(() => {
-    try {
-      if (typeof imageSource === 'number') {
-        const resolver = (Image as any).resolveAssetSource
-        if (typeof resolver === 'function') {
-          const { width, height } = resolver(imageSource)
-          if (width && height) {
-            setAspectRatio(width / height)
-            return
-          }
-        }
-      } else if (imageSource && typeof imageSource === 'object' && 'uri' in (imageSource as any)) {
-        const uri = (imageSource as any).uri
-        if (uri) {
-          Image.getSize(
-            uri,
-            (w, h) => {
-              if (w && h) setAspectRatio(w / h)
-            },
-            () => setAspectRatio(1)
-          )
-        }
-      }
-    } catch {
-      setAspectRatio(1)
-    }
-  }, [imageSource])
+  // base size scales with smaller dimension
+  const baseMarker = Math.max(8, Math.round(Math.min(viewW, viewH) * 0.04));
 
-  const handleLayout = (e: any) => {
-    const { width, height } = e.nativeEvent.layout
-    setLayoutSize({ w: width, h: height })
-  }
-
-  // Natív debug tap (iOS/Android)
-  const handleDebugTapNative = (e: any) => {
-    if (!debug) return
-    const { locationX, locationY } = e.nativeEvent || {}
-    const { w, h } = layoutSize
-    if (typeof locationX === 'number' && typeof locationY === 'number' && w > 0 && h > 0) {
-      const nx = +(locationX / w).toFixed(3)
-      const ny = +(locationY / h).toFixed(3)
-      setLastTap({ x: nx, y: ny })
-      console.log(`tap@bull: x=${nx}, y=${ny}`)
-    }
-  }
-
-  // Web debug tap – boundingRect alapján
-  const handleDebugTapWeb = (e: any) => {
-    if (!debug || Platform.OS !== 'web') return
-    try {
-      const node = containerRef.current as unknown as HTMLElement | null
-      if (!node) return
-      const rect = node.getBoundingClientRect?.()
-      if (!rect) return
-      const clientX = e?.nativeEvent?.clientX ?? e?.clientX
-      const clientY = e?.nativeEvent?.clientY ?? e?.clientY
-      if (typeof clientX !== 'number' || typeof clientY !== 'number') return
-      const xIn = clientX - rect.left
-      const yIn = clientY - rect.top
-      if (rect.width > 0 && rect.height > 0) {
-        const nx = +(xIn / rect.width).toFixed(3)
-        const ny = +(yIn / rect.height).toFixed(3)
-        setLastTap({ x: nx, y: ny })
-        console.log(`tap@bull: x=${nx}, y=${ny}`)
-      }
-    } catch {}
-  }
-
-  // Címke pozíció az align szerint
-  const labelStyleFor = (side: Hotspot['align'] | undefined, marker: number, offset: number) => {
-    switch (side) {
-      case 'left':
-        return { marginLeft: -(marker / 2 + offset), transform: [{ translateX: -8 }] }
-      case 'right':
-        return { marginLeft: marker / 2 + offset }
-      case 'top':
-        return { marginTop: -(marker / 2 + offset) }
-      case 'bottom':
-      default:
-        return { marginTop: marker / 2 + offset }
-    }
-  }
-
-  const containerDimStyle =
-    typeof containerWidth === 'string'
-      ? { width: containerWidth as string }
-      : { width: containerWidth as number }
-
-  // Dinamikus marker méret (szélesség ~12%-a), korlátokkal
-  const dynamicMarker = (() => {
-    const w = layoutSize.w || 0
-    if (markerSize === 'auto') {
-      const px = w * 0.12 // 12% a konténer szélességéből
-      return Math.max(40, Math.min(px, 88)) // min 40, max 88
-    }
-    return markerSize
-  })()
-
-  const effectiveShowLabels = showLabels && layoutSize.w >= autoHideLabelsBelowWidth
+  const handlePress = (h: BullSpot) => {
+    if (onPress) onPress(h);
+    else console.log("Hotspot press:", h.id);
+  };
 
   return (
-    <View
-      style={[
-        styles.wrapper,
-        containerStyle,
-        containerDimStyle,
-        { maxWidth: containerMaxWidth },
-      ]}
-    >
-      <View
-        ref={containerRef as any}
-        style={{ width: '100%', aspectRatio, position: 'relative' }}
-        onLayout={handleLayout}
-        {...(Platform.OS === 'web'
-          ? {
-              onMouseDown: handleDebugTapWeb,
-              style: {
-                width: '100%',
-                aspectRatio,
-                position: 'relative',
-                cursor: debug ? 'crosshair' : 'default',
-              } as any,
-            }
-          : {})}
-      >
-        <Image
-          source={imageSource}
-          style={styles.image}
-          resizeMode="contain"
-          onLoad={(evt) => {
-            if (Platform.OS === 'web' && aspectRatio === 1) {
-              try {
-                const { naturalWidth, naturalHeight } = (evt?.nativeEvent?.target as any) || {}
-                if (naturalWidth && naturalHeight) {
-                  setAspectRatio(naturalWidth / naturalHeight)
-                }
-              } catch {}
-            }
-          }}
-        />
-
-        {debug && Platform.OS !== 'web' && (
-          <Pressable
-            style={StyleSheet.absoluteFill}
-            onPress={handleDebugTapNative}
-            android_ripple={{ color: 'transparent' }}
-          />
-        )}
-
-        {(spots ?? []).map((s) => {
-          const leftPct = `${s.x * 100}%`
-          const topPct = `${s.y * 100}%`
-
-          const markerPos = {
-            width: dynamicMarker,
-            height: dynamicMarker,
-            left: leftPct,
-            top: topPct,
-            marginLeft: -dynamicMarker / 2,
-            marginTop: -dynamicMarker / 2,
-          } as const
-
-          const baseLabelPos = {
-            left: leftPct,
-            top: topPct,
-          } as const
-
+    <View style={[styles.container, { width: viewW, height: viewH }]}>
+      <Svg width={viewW} height={viewH} style={StyleSheet.absoluteFill}>
+        {HOTSPOTS.map((s) => {
+          const cx = s.x * viewW;
+          const cy = s.y * viewH;
+          const size = s.size ? Math.round(baseMarker * s.size) : baseMarker;
           return (
-            <React.Fragment key={s.id}>
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={s.label}
-                onPress={() => {
-                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {})
-                  onSpotPress?.(s.id)
-                }}
-                hitSlop={14}
-                style={({ pressed }) => [
-                  styles.marker,
-                  markerPos,
-                  pressed && { transform: [{ scale: 0.9 }] },
-                ]}
-              >
-                <View style={styles.dot} />
-              </Pressable>
-
-              {effectiveShowLabels && (
-                <View
-                  style={[
-                    styles.label,
-                    { pointerEvents: 'none' } as any,
-                    baseLabelPos,
-                    labelStyleFor(s.align, dynamicMarker, labelOffset),
-                  ]}
-                >
-                  <Text style={styles.labelText}>{s.label}</Text>
-                </View>
-              )}
-            </React.Fragment>
-          )
+            <Circle
+              key={s.id}
+              cx={cx}
+              cy={cy}
+              r={size}
+              fill="#ff6b6b"
+              stroke="#fff"
+              strokeWidth={2}
+              opacity={0.95}
+            />
+          );
         })}
+      </Svg>
 
-        {debug && lastTap && (
-          <View style={styles.debugPanel}>
-            <Text style={styles.debugText}>{`x=${lastTap.x}  y=${lastTap.y}`}</Text>
-          </View>
-        )}
+      {/* Overlay touchable buttons (absolute) because TouchableOpacity inside Svg is not cross-platform reliable */}
+      {HOTSPOTS.map((s) => {
+        const cx = s.x * viewW;
+        const cy = s.y * viewH;
+        const size = s.size ? Math.round(baseMarker * s.size) : baseMarker;
+        const left = Math.max(0, cx - size);
+        const top = Math.max(0, cy - size);
+        return (
+          <TouchableOpacity
+            key={s.id}
+            activeOpacity={0.8}
+            onPress={() => handlePress(s)}
+            style={[styles.touchArea, { left, top, width: size * 2, height: size * 2 }]}
+            accessibilityLabel={s.title ?? s.id}
+            accessibilityRole="button"
+          />
+        );
+      })}
+
+      <View style={styles.legend}>
+        {HOTSPOTS.slice(0, 3).map((h) => (
+          <TouchableOpacity key={h.id} style={styles.legendItem} onPress={() => handlePress(h)}>
+            <View style={styles.dot} />
+            <Text numberOfLines={1} style={styles.legendText}>
+              {h.title ?? h.id}
+            </Text>
+          </TouchableOpacity>
+        ))}
       </View>
     </View>
-  )
-}
+  );
+};
 
 const styles = StyleSheet.create({
-  wrapper: { alignSelf: 'center' },
-  image: { position: 'absolute', inset: 0, width: '100%', height: '100%' },
-  marker: {
-    position: 'absolute',
+  container: {
+    position: "relative",
+    backgroundColor: "transparent",
+  },
+  touchArea: {
+    position: "absolute",
     borderRadius: 999,
-    backgroundColor: '#E10600',
-    borderWidth: 3,
-    borderColor: '#ffffff',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 3,
+    backgroundColor: "transparent",
   },
-  dot: { width: 12, height: 12, borderRadius: 999, backgroundColor: '#fff' },
-  label: {
-    position: 'absolute',
-    backgroundColor: 'rgba(2,6,23,0.85)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    borderWidth: StyleSheet.hairlineWidth,
-    borderColor: 'rgba(255,255,255,0.18)',
-    maxWidth: 160,
-  },
-  labelText: {
-    color: '#E2E8F0',
-    fontSize: 12,
-    fontWeight: '600',
-    flexWrap: 'wrap',
-  },
-  debugPanel: {
-    position: 'absolute',
+  legend: {
+    position: "absolute",
+    bottom: 8,
     left: 8,
-    top: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    backgroundColor: 'rgba(2,6,23,0.7)',
-    borderRadius: 6,
+    right: 8,
+    flexDirection: "row",
+    alignItems: "center",
   },
-  debugText: { color: '#E2E8F0', fontSize: 12 },
-})
+  legendItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(0,0,0,0.45)",
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginRight: 8,
+  },
+  dot: {
+    width: 10,
+    height: 10,
+    borderRadius: 6,
+    backgroundColor: "#ff6b6b",
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: "#fff",
+  },
+  legendText: {
+    color: "#fff",
+    fontSize: 12,
+    maxWidth: 140,
+  },
+});
+
+export default BullHeadHotspots;
